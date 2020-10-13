@@ -137,9 +137,8 @@ function loadShader(gl, type, source) {
 
   // See if it compiled successfully
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert(
-      'An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader)
-    );
+    const err = gl.getShaderInfoLog(shader);
+    console.error('Shader compile error', err);
     gl.deleteShader(shader);
     return null;
   }
@@ -161,10 +160,8 @@ function initShaderProgram(gl, vsSource, fsSource) {
   // If creating the shader program failed, alert
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert(
-      'Unable to initialize the shader program: ' +
-        gl.getProgramInfoLog(shaderProgram)
-    );
+    const err = gl.getProgramInfoLog(shaderProgram);
+    console.error('Shader link error', err);
     return null;
   }
 
@@ -1603,7 +1600,7 @@ export function main(player, canvas, options) {
       frameCount = 0;
       elapsedTime -= 1000;
 
-      console.log("fps", fps);
+      // console.log("fps", fps);
     }
 
     // Do it again!
