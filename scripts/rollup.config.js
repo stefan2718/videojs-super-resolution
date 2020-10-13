@@ -1,12 +1,17 @@
 const generate = require('videojs-generate-rollup-config');
 const copy = require('rollup-plugin-copy');
+const glslify = require('rollup-plugin-glslify');
 
 // see https://github.com/videojs/videojs-generate-rollup-config
 // for options
 const options = {
   plugins(defaults) {
     return {
-      browser: defaults.browser.concat([
+      browser: [
+        ...defaults.browser,
+        glslify({
+          compress: false,
+        }),
         copy({
           targets: [
             {
@@ -19,8 +24,13 @@ const options = {
             }
           ]
         }),
-      ]),
-      module: defaults.module,
+      ],
+      module: [
+        ...defaults.module,
+        glslify({
+          compress: false,
+        }),
+      ],
       test: defaults.test,
     };
   }

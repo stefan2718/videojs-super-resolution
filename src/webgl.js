@@ -1,4 +1,7 @@
 import { mat4 } from 'gl-matrix';
+import copyFragShader from './shaders/copyFragShader.glsl';
+import padFragShader from './shaders/padFragShader.glsl';
+import vsSource from './shaders/vsSource.glsl';
 
 /**
  * Weights functions
@@ -115,15 +118,6 @@ var copyVideo = false;
  * Utility functions
  */
 
-// Vertex shader program
-var vsSource = `#version 300 es
-    in vec4 aVertexPosition;
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
-    void main(void) {
-        gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-    }
-`;
 
 // creates a shader of the given type, uploads the source and compiles it.
 function loadShader(gl, type, source) {
@@ -176,28 +170,6 @@ function initShaderProgram(gl, vsSource, fsSource) {
  */
 
 function initCopyProgram(gl) {
-  var copyFragShader = `#version 300 es
-  precision highp float;
-  uniform sampler2D originalSampler;
-
-  uniform vec2 videoRes;
-  uniform vec4 renderArea;
-
-  layout(location = 0) out vec4 copyOut;
-
-  void main() {
-    if (gl_FragCoord[0] < renderArea.x) {
-      copyOut = vec4(0.0, 0.0, 0.0, 1.0);
-    } else if (gl_FragCoord[0] > renderArea.z) {
-      copyOut = vec4(0.0, 0.0, 0.0, 1.0);
-    } else if ((gl_FragCoord[1] < renderArea.y) || (gl_FragCoord[1] > renderArea.w)) {
-      copyOut = vec4(0.0, 0.0, 0.0, 1.0);
-    } else {
-      copyOut = texture(originalSampler, vec2((gl_FragCoord[0] - renderArea.x) / videoRes.x, 1.0 - ((gl_FragCoord[1] - renderArea.y) / videoRes.y)));
-    }
-  }
-  `;
-
   console.log(copyFragShader);
 
   return initShaderProgram(gl, vsSource, copyFragShader);
@@ -205,33 +177,8 @@ function initCopyProgram(gl) {
 
 // Symmetrically pad a 2d texture with black
 function initPadProgram(gl, padding) {
-  var padFragShader = `#version 300 es
-
-  precision highp float;
-
-  uniform sampler2D originalSampler;
-  uniform vec2 videoRes;
-
-  ivec2 start = ivec2(${padding}, ${padding});
-  layout(location = 0) out vec4 padOut;
-
-  void main() {
-    ivec2 end = ivec2(videoRes.x + ${padding}.0, videoRes.y + ${padding}.0);
-    ivec2 outC = ivec2(gl_FragCoord[0], gl_FragCoord[1]);
-
-    if (any(lessThan(outC, start)) || any(greaterThanEqual(outC, end))) {
-      padOut = vec4(0.0, 0.0, 0.0, 0.0);
-    } else {
-      float x = gl_FragCoord[0] - 4.0;
-      float y = gl_FragCoord[1] - 4.0;
-      vec2 coords = vec2(x / videoRes.x, y / videoRes.y);
-      padOut = texture(originalSampler, coords) * 255.0;
-      // padOut = vec4(x, y, coords.r, coords.g);
-    }
-  }
-  `;
-
   console.log(padFragShader);
+  console.log(vsSource);
 
   return initShaderProgram(gl, vsSource, padFragShader);
 }
