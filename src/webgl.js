@@ -552,22 +552,24 @@ function init_reconstruct_program(gl) {
 
   for (var j = 0; j < 3; j++) {
     for (var i = 0; i < 3; i++) {
-      // Todo
-      coords.push(`vec2 coords_${j}_${i} = vec2((inX + ${i}.0) / inWidth, (inY + ${j}.0) / inHeight);`);
+      coords.push(`vec2 coords_${j}_${i} = (inVal + vec2(${i}.0, ${j}.0)) / scaledInSize;`);
 
       inputs.push(`vec4 in_${j}_${i}_0 = texture(layer1Sampler, coords_${j}_${i});`);
       inputs.push(`vec4 in_${j}_${i}_1 = texture(layer2Sampler, coords_${j}_${i});`);
-      
-      weights.push(`vec4 w_${j}_${i}_0_0 = weights[2 * (iOutY * 81 + iOutX * 27 + ${j * 9 + i * 3}) + 0];`);
-      weights.push(`vec4 w_${j}_${i}_0_1 = weights[2 * (iOutY * 81 + iOutX * 27 + ${j * 9 + i * 3}) + 1];`);
-      weights.push(`vec4 w_${j}_${i}_1_0 = weights[2 * (iOutY * 81 + iOutX * 27 + ${j * 9 + i * 3}) + 2];`);
-      weights.push(`vec4 w_${j}_${i}_1_1 = weights[2 * (iOutY * 81 + iOutX * 27 + ${j * 9 + i * 3}) + 3];`);
-      weights.push(`vec4 w_${j}_${i}_2_0 = weights[2 * (iOutY * 81 + iOutX * 27 + ${j * 9 + i * 3}) + 4];`);
-      weights.push(`vec4 w_${j}_${i}_2_1 = weights[2 * (iOutY * 81 + iOutX * 27 + ${j * 9 + i * 3}) + 5];`);
 
-      operations.push(`r_val += dot(in_${j}_${i}_0, w_${j}_${i}_0_0) + dot(in_${j}_${i}_1, w_${j}_${i}_0_1);`);
-      operations.push(`g_val += dot(in_${j}_${i}_0, w_${j}_${i}_1_0) + dot(in_${j}_${i}_1, w_${j}_${i}_1_1);`);
-      operations.push(`b_val += dot(in_${j}_${i}_0, w_${j}_${i}_2_0) + dot(in_${j}_${i}_1, w_${j}_${i}_2_1);`);
+      const outerOffset = 2 * (j*9 + i*3);
+      weights.push(`vec4 w_${j}_${i}_0_0 = weights[weightOffset + ${outerOffset+0}];`);
+      weights.push(`vec4 w_${j}_${i}_0_1 = weights[weightOffset + ${outerOffset+1}];`);
+      weights.push(`vec4 w_${j}_${i}_1_0 = weights[weightOffset + ${outerOffset+2}];`);
+      weights.push(`vec4 w_${j}_${i}_1_1 = weights[weightOffset + ${outerOffset+3}];`);
+      weights.push(`vec4 w_${j}_${i}_2_0 = weights[weightOffset + ${outerOffset+4}];`);
+      weights.push(`vec4 w_${j}_${i}_2_1 = weights[weightOffset + ${outerOffset+5}];`);
+
+      operations.push(`val += vec3(
+        dot(in_${j}_${i}_0, w_${j}_${i}_0_0) + dot(in_${j}_${i}_1, w_${j}_${i}_0_1),
+        dot(in_${j}_${i}_0, w_${j}_${i}_1_0) + dot(in_${j}_${i}_1, w_${j}_${i}_1_1),
+        dot(in_${j}_${i}_0, w_${j}_${i}_2_0) + dot(in_${j}_${i}_1, w_${j}_${i}_2_1)
+      );`);
     }
   }
 
@@ -584,24 +586,15 @@ function init_reconstruct_program(gl) {
 
   uniform vec4 weights[${3 * 3 * 3 * 9 * 2}];
   uniform vec3 biases[9];
-
+  vec2 scaledInSize = videoRes + vec2(2.0);
   out vec4 final_out;
 
   void main() {
-    vec4 out0 = vec4(0.0, 0.0, 0.0, 1.0);
-    float r_val = 0.0;
-    float g_val = 0.0;
-    float b_val = 0.0;
-
-    int iOutX = int(mod(gl_FragCoord[0] - 0.5, 3.0));
-    int iOutY = int(mod(gl_FragCoord[1] - 0.5, 3.0));
-
-    float inX = (gl_FragCoord[0] - float(iOutX) - 0.5) / 3.0 + 0.5;
-    float inY = (gl_FragCoord[1] - float(iOutY) - 0.5) / 3.0 + 0.5;
-
-    float inWidth = videoRes.x + 2.0;
-    float inHeight = videoRes.y + 2.0;
-
+    vec2 pixelCentre = gl_FragCoord - 0.5;
+    ivec2 iOut = int(mod(pixelCentre, 3.0));
+    vec2 inVal = (pixelCentre - float(iOut)) / 3.0 + 0.5;
+    int weightOffset = 2 * (iOut.y * 81 + iOut.x * 27);
+    vec3 val = vec3(0.0);
     // Coords
 ${coords.join("\n")}
 
@@ -614,11 +607,10 @@ ${weights.join("\n")}
     // Operations
 ${operations.join("\n")}
 
-    out0.rgb = (vec3(r_val, g_val, b_val) + biases[3 * iOutY + iOutX].rgb) / 255.0;
-    out0.rgb += texture(originalSampler, vec2(gl_FragCoord[0] / (videoRes.x * 3.0), gl_FragCoord[1] / (videoRes.y * 3.0))).rgb;
-    out0.rgb = clamp(out0.rgb, 0.0, 1.0);
-
-    final_out = out0;
+    vec3 out0 = (val + biases[3 * iOut.y + iOut.x]) / 255.0;
+    out0 += texture(originalSampler, gl_FragCoord / (videoRes*3.0));
+    out0 = clamp(out0, 0.0, 1.0); // TODO rely on hardware clamp on output field?
+    final_out.rgb = out0;
   }
   `;
 
