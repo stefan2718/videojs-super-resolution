@@ -792,9 +792,12 @@ function updateTexture(gl, texture, video) {
 // Draw the scene.
 function drawScene(gl, programInfo, buffers, texture) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
-  gl.clearDepth(1.0); // Clear everything
-  gl.enable(gl.DEPTH_TEST); // Enable depth testing
-  gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
+  gl.blendFunc(gl.ZERO, gl.ONE); // don't blend
+
+  // gl.clearDepth(1.0); // Clear everything
+  // gl.enable(gl.DEPTH_TEST); // Enable depth testing
+  // gl.depthFunc(gl.LEQUAL); // Near things obscure far things
 
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -874,7 +877,7 @@ function drawScene(gl, programInfo, buffers, texture) {
 
   gl.uniform1i(programInfo.samplers[0], 0);
 
-  if (programInfo.textures.length > 0) {
+  if (programInfo.textures.length > 1) {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[1]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[1]);
@@ -883,7 +886,7 @@ function drawScene(gl, programInfo, buffers, texture) {
     gl.uniform1i(programInfo.samplers[1], 1);
   }
 
-  if (programInfo.textures.length > 1) {
+  if (programInfo.textures.length > 2) {
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[2]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[2]);
@@ -892,7 +895,7 @@ function drawScene(gl, programInfo, buffers, texture) {
     gl.uniform1i(programInfo.samplers[2], 2);
   }
 
-  if (programInfo.textures.length > 2) {
+  if (programInfo.textures.length > 3) {
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[3]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[3]);
@@ -901,7 +904,7 @@ function drawScene(gl, programInfo, buffers, texture) {
     gl.uniform1i(programInfo.samplers[3], 3);
   }
 
-  if (programInfo.textures.length > 3) {
+  if (programInfo.textures.length > 4) {
     gl.activeTexture(gl.TEXTURE4);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[4]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[4]);
@@ -1238,7 +1241,7 @@ export function main(player, canvas, options) {
     videoRes: videoRes
   };
 
-  player.on("loadedmetadata", (x) => {
+  player.on("loadedmetadata", () => {
     console.log("Video res:", video.videoWidth, video.videoHeight);
     videoWidth = video.videoWidth;
     videoHeight = video.videoHeight;
@@ -1287,10 +1290,10 @@ export function main(player, canvas, options) {
   const w_conv2_2_fb = gl.createFramebuffer();
   const w_reconstruct_fb = gl.createFramebuffer();
 
-  var elapsedTime = 0;
-  var frameCount = 0;
-  var lastTime = new Date().getTime();
-  var fps = 0;
+  // var elapsedTime = 0;
+  // var frameCount = 0;
+  // var lastTime = new Date().getTime();
+  // var fps = 0;
 
   // Draw the scene repeatedly
   function render(now) {
@@ -1318,31 +1321,11 @@ export function main(player, canvas, options) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, pad_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pad_texture, 0);
     gl.drawBuffers([
-      gl.COLOR_ATTACHMENT0, // gl_FragData[0]
+      gl.COLOR_ATTACHMENT0,
     ]);
     gl.viewport(0, 0, videoWidth + 8, videoHeight + 8);
 
     drawScene(gl, padProgramInfo, buffers);
-
-    /*
-    console.log("PADDED");
-    var w = videoWidth + 8;
-    var h = videoHeight + 8;
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    var pixels0 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels0);
-
-    for (var readY = 99; readY < 100; readY++) {
-      for (var readX = 99; readX < 107; readX++) {
-        var vals = [];
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 3]);
-        console.log(`padded ${readY}_${readX}`, vals);
-      }
-    }
-    */
 
     // Apply W_conv1_1
 
@@ -1357,47 +1340,6 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth + 8, videoHeight + 4);
 
     drawScene(gl, conv1_1_program_info, buffers);
-
-    /*
-    console.log("CONV1_1");
-    var w = videoWidth + 8;
-    var h = videoHeight + 4;
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    var pixels0 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels0);
-    gl.readBuffer(gl.COLOR_ATTACHMENT1);
-    var pixels1 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels1);
-    gl.readBuffer(gl.COLOR_ATTACHMENT2);
-    var pixels2 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels2);
-    gl.readBuffer(gl.COLOR_ATTACHMENT3);
-    var pixels3 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels3);
-
-    for (var readY = 99; readY < 100; readY++) {
-      for (var readX = 99; readX < 107; readX++) {
-        var vals = [];
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 3]);
-        console.log(`conv1_1 ${readY}_${readX}`, vals);
-      }
-    }
-    */
 
     // Apply W_conv1_2, relu and bias
     // in: 648x290x8
@@ -1418,47 +1360,6 @@ export function main(player, canvas, options) {
 
     drawScene(gl, conv1_2_program_info, buffers);
 
-    /*
-    console.log("CONV1_2");
-    var w = videoWidth + 4;
-    var h = videoHeight + 4;
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    var pixels0 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels0);
-    gl.readBuffer(gl.COLOR_ATTACHMENT1);
-    var pixels1 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels1);
-    gl.readBuffer(gl.COLOR_ATTACHMENT2);
-    var pixels2 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels2);
-    gl.readBuffer(gl.COLOR_ATTACHMENT3);
-    var pixels3 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels3);
-
-    for (var readY = 99; readY < 100; readY++) {
-      for (var readX = 99; readX < 107; readX++) {
-        var vals = [];
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels2[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels3[readY * w * 4 + readX * 4 + 3]);
-        console.log(`conv1_2 ${readY}_${readX}`, vals);
-      }
-    }
-    */
-
     // Apply W_conv2_1
     // in: 644x290x8
     // out: 644x288x4
@@ -1473,33 +1374,6 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth + 4, videoHeight + 2);
 
     drawScene(gl, conv2_1_program_info, buffers);
-
-    /*
-    console.log("CONV2_1");
-    var w = videoWidth + 4;
-    var h = videoHeight + 2;
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    var pixels0 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels0);
-    gl.readBuffer(gl.COLOR_ATTACHMENT1);
-    var pixels1 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels1);
-
-    for (var readY = 99; readY < 100; readY++) {
-      for (var readX = 99; readX < 107; readX++) {
-        var vals = [];
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 3]);
-        console.log(`conv2_1 ${readY}_${readX}`, vals);
-      }
-    }
-    */
 
     // Apply W_conv2_2, relu and bias
     // in: 644x288x4
@@ -1516,41 +1390,10 @@ export function main(player, canvas, options) {
 
     drawScene(gl, conv2_2_program_info, buffers);
 
-    /*
-    console.log("CONV2_2");
-    var w = videoWidth + 2;
-    var h = videoHeight + 2;
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    var pixels0 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels0);
-    gl.readBuffer(gl.COLOR_ATTACHMENT1);
-    var pixels1 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels1);
-
-    for (var readY = 99; readY < 100; readY++) {
-      for (var readX = 99; readX < 107; readX++) {
-        var vals = [];
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 3]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels1[readY * w * 4 + readX * 4 + 3]);
-        console.log(`conv2_2 ${readY}_${readX}`, vals);
-      }
-    }
-    */
-
-
     // Reconstruct
     // in: 642x288x4
     // out: 640x286x27
     // out: 1920x858x3 (hard)
-
-    // Scale the current texture
-    // Sum and clamp
     
     gl.bindFramebuffer(gl.FRAMEBUFFER, w_reconstruct_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, reconstruct_texture, 0);
@@ -1561,27 +1404,6 @@ export function main(player, canvas, options) {
 
     drawScene(gl, reconstruct_program_info, buffers);
 
-    /*
-    console.log("Reconstruct");
-    var w = videoWidth * 3;
-    var h = videoHeight * 3;
-    gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    var pixels0 = new Float32Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, pixels0);
-
-    for (var readY = 99; readY < 102; readY++) {
-      for (var readX = 99; readX < 102; readX++) {
-        var vals = [];
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 0]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 1]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 2]);
-        vals.push(pixels0[readY * w * 4 + readX * 4 + 3]);
-        console.log(`reconstruct ${readY}_${readX}`, vals);
-      }
-    }
-    */
-
-
     /**
      * Render Final Video
      */
@@ -1590,18 +1412,17 @@ export function main(player, canvas, options) {
 
     drawScene(gl, render_program_info, buffers);
 
-    var now = new Date().getTime();
-    frameCount++;
-    elapsedTime += now - lastTime;
+    // var now = new Date().getTime();
+    // frameCount++;
+    // elapsedTime += now - lastTime;
 
-    lastTime = now;
-    if(elapsedTime >= 1000) {
-      fps = frameCount;
-      frameCount = 0;
-      elapsedTime -= 1000;
-
-      // console.log("fps", fps);
-    }
+    // lastTime = now;
+    // if(elapsedTime >= 1000) {
+    //   fps = frameCount;
+    //   frameCount = 0;
+    //   elapsedTime -= 1000;
+    //   console.log("fps", fps);
+    // }
 
     // Do it again!
     if (loaded_count < 1) {
