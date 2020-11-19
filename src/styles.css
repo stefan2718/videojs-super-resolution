@@ -6,7 +6,7 @@
 .vjs-matrix .vjs-sr-demo-handle {
   height: 100% !important;
   width: 1px !important;
-  top: 0px !important;
+  top: 0 !important;
   background-color: #000 !important;
   left: calc(50%) !important;
   border: 1px solid black !important;
