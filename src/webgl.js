@@ -867,14 +867,16 @@ function drawScene(gl, programInfo, buffers, texture) {
     modelViewMatrix
   );
 
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[0]);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[0]);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, programInfo.filters[0]);
-
-  gl.uniform1i(programInfo.samplers[0], 0);
-
   if (programInfo.textures.length > 0) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[0]);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[0]);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, programInfo.filters[0]);
+
+    gl.uniform1i(programInfo.samplers[0], 0);
+  }
+
+  if (programInfo.textures.length > 1) {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[1]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[1]);
@@ -883,7 +885,7 @@ function drawScene(gl, programInfo, buffers, texture) {
     gl.uniform1i(programInfo.samplers[1], 1);
   }
 
-  if (programInfo.textures.length > 1) {
+  if (programInfo.textures.length > 2) {
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[2]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[2]);
@@ -892,22 +894,13 @@ function drawScene(gl, programInfo, buffers, texture) {
     gl.uniform1i(programInfo.samplers[2], 2);
   }
 
-  if (programInfo.textures.length > 2) {
+  if (programInfo.textures.length > 3) {
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[3]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[3]);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, programInfo.filters[3]);
 
     gl.uniform1i(programInfo.samplers[3], 3);
-  }
-
-  if (programInfo.textures.length > 3) {
-    gl.activeTexture(gl.TEXTURE4);
-    gl.bindTexture(gl.TEXTURE_2D, programInfo.textures[4]);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, programInfo.filters[4]);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, programInfo.filters[4]);
-
-    gl.uniform1i(programInfo.samplers[4], 4);
   }
 
   if (programInfo.weights) {
