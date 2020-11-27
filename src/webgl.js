@@ -174,7 +174,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
 
 function initCopyProgram(gl) {
   const copyFragShader = `#version 300 es
-  precision highp float;
+  precision mediump float;
   uniform sampler2D originalSampler;
 
   uniform vec2 videoRes;
@@ -204,7 +204,7 @@ function initCopyProgram(gl) {
 function initPadProgram(gl, padding) {
   const padFragShader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D originalSampler;
   uniform vec2 videoRes;
@@ -267,7 +267,7 @@ function init_conv1_1_program(gl) {
 
   const conv1_1_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D padSampler;
   uniform vec3 weights[${layer_1_width * layer_1_depth}];
@@ -343,8 +343,8 @@ function init_conv1_2_program(gl) {
 
   const conv1_2_shader = `#version 300 es
 
-  precision highp float;
-  precision highp sampler2D;
+  precision mediump float;
+  precision mediump sampler2D;
 
   uniform sampler2D layer1Sampler;
   uniform sampler2D layer2Sampler;
@@ -430,7 +430,7 @@ function init_conv2_1_program(gl) {
 
   const conv2_1_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D layer1Sampler;
   uniform sampler2D layer2Sampler;
@@ -496,7 +496,7 @@ function init_conv2_2_program(gl) {
 
   const conv2_2_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D layer1Sampler;
   uniform sampler2D layer2Sampler;
@@ -570,7 +570,7 @@ function init_reconstruct_program(gl) {
 
   const reconstruct_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D originalSampler;
   uniform sampler2D layer1Sampler;
