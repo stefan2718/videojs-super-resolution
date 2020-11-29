@@ -802,6 +802,23 @@ const zFar = 100.0;
 const projectionMatrix = mat4.create();
 mat4.ortho(projectionMatrix, -1.0, 1.0, 1.0, -1.0, zNear, zFar);
 
+// Set the drawing position to the "identity" point, which is
+// the center of the scene.
+const modelViewMatrix = mat4.create();
+
+// Now move the drawing position a bit to where we want to
+// start drawing the square.
+mat4.translate(
+  modelViewMatrix, // destination matrix
+  modelViewMatrix, // matrix to translate
+  [-0.0, 0.0, -6.0]
+); // amount to translate
+
+const normalMatrix = mat4.create();
+mat4.invert(normalMatrix, modelViewMatrix);
+mat4.transpose(normalMatrix, normalMatrix);
+
+
 // Draw the scene.
 function drawScene(gl, programInfo, buffers, texture) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
@@ -811,23 +828,6 @@ function drawScene(gl, programInfo, buffers, texture) {
 
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  const modelViewMatrix = mat4.create();
-
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
-
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -6.0]
-  ); // amount to translate
-
-  const normalMatrix = mat4.create();
-  mat4.invert(normalMatrix, modelViewMatrix);
-  mat4.transpose(normalMatrix, normalMatrix);
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
