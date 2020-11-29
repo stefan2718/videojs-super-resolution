@@ -789,6 +789,19 @@ function updateTexture(gl, texture, video) {
   );
 }
 
+// Setup the unchanging variables for drawScene
+
+// Create a perspective matrix, a special matrix that is
+// used to simulate the distortion of perspective in a camera.
+// Our field of view is 45 degrees, with a width/height
+// ratio that matches the display size of the canvas
+// and we only want to see objects between 0.1 units
+// and 100 units away from the camera.
+const zNear = 0.1;
+const zFar = 100.0;
+const projectionMatrix = mat4.create();
+mat4.ortho(projectionMatrix, -1.0, 1.0, 1.0, -1.0, zNear, zFar);
+
 // Draw the scene.
 function drawScene(gl, programInfo, buffers, texture) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
@@ -798,19 +811,6 @@ function drawScene(gl, programInfo, buffers, texture) {
 
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Create a perspective matrix, a special matrix that is
-  // used to simulate the distortion of perspective in a camera.
-  // Our field of view is 45 degrees, with a width/height
-  // ratio that matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
-
-  const zNear = 0.1;
-  const zFar = 100.0;
-  const projectionMatrix = mat4.create();
-
-  mat4.ortho(projectionMatrix, -1.0, 1.0, 1.0, -1.0, zNear, zFar);
 
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
