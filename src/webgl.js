@@ -1024,13 +1024,7 @@ export function main(player, canvas, options) {
     return;
   }
 
-  const ext =
-    gl.getExtension('OES_texture_float') ||
-    gl.getExtension('MOZ_OES_texture_float') ||
-    gl.getExtension('WEBKIT_OES_texture_float');
-  gl.getExtension('OES_texture_half_float') ||
-  gl.getExtension('MOZ_OES_texture_half_float') ||
-  gl.getExtension('WEBKIT_OES_texture_half_float');
+  // enable WebGL extensions
   gl.getExtension('EXT_color_buffer_float');
   gl.getExtension('OES_texture_float_linear');
   gl.getExtension('OES_texture_half_float_linear');
