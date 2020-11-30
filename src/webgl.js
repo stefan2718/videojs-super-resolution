@@ -821,11 +821,6 @@ mat4.transpose(normalMatrix, normalMatrix);
 
 // Draw the scene.
 function drawScene(gl, programInfo, buffers, texture) {
-  gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
-  gl.clearDepth(1.0); // Clear everything
-  gl.enable(gl.DEPTH_TEST); // Enable depth testing
-  gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -1028,6 +1023,13 @@ export function main(player, canvas, options) {
   gl.getExtension('EXT_color_buffer_float');
   gl.getExtension('OES_texture_float_linear');
   gl.getExtension('OES_texture_half_float_linear');
+
+  // set default clearing values
+  gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
+  gl.clearDepth(1.0); // Clear everything
+  gl.enable(gl.DEPTH_TEST); // Enable depth testing
+  gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
 
   // Initialize the textures
 
