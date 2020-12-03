@@ -1005,6 +1005,17 @@ export function main(player, canvas, options) {
   const renderArea = [0, 0, 100, 100];
   const videoRes = [100, 100];
 
+  // get the target framerate if it was passed
+  let targetFrameRate = 30;
+  if (options.frameRate) {
+    targetFrameRate = options.frameRate;
+  }
+
+  // to get to our targetFrameRate we add a delay to the requestAnimationFrame call
+  // requestAnimationFrame runs at the speed of the display refresh rate
+  // TODO: add a benchmark for requestAnimationFrame to get the monitor refresh rate, we currently assume 60Hz
+  const frameDelay = (1000 / targetFrameRate) - 6;
+
   player.on('playing', () => {
     copyVideo = true;
   });
@@ -1596,7 +1607,7 @@ export function main(player, canvas, options) {
 
     // Do it again!
     if (loaded_count < 1) {
-      requestAnimationFrame(render);
+      requestAnimationFrame(() => setTimeout(render, frameDelay));
     }
   }
 
