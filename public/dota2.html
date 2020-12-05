@@ -32,7 +32,7 @@
     <script src="/dist/videojs-super-resolution.js"></script>
     <script>
       (function(window, videojs) {
-        var examplePlayer = (window.examplePlayer = videojs(
+        let examplePlayer = (window.examplePlayer = videojs(
           'videojs-super-resolution-player',
           {
             plugins: {
@@ -49,7 +49,10 @@
             }
           }
         ));
-        var superResolution = (window.superResolution = examplePlayer.superResolution({"weights": dota2_weights}));
+        let superResolution = (window.superResolution = examplePlayer.superResolution({
+          "weights": dota2_weights,
+          "frameRate": 30,
+        }));
       })(window, window.videojs);
     </script>
   </body>
