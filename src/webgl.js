@@ -1004,17 +1004,7 @@ export function main(player, canvas, options) {
   let videoWidth = video.videoWidth || 640;
   const renderArea = [0, 0, 100, 100];
   const videoRes = [100, 100];
-
-  // get the target framerate if it was passed
-  let targetFrameRate = 30;
-  if (options.frameRate) {
-    targetFrameRate = options.frameRate;
-  }
-
-  // to get to our targetFrameRate we add a delay to the requestAnimationFrame call
-  // requestAnimationFrame runs at the speed of the display refresh rate
-  // TODO: add a benchmark for requestAnimationFrame to get the monitor refresh rate, we currently assume 60Hz
-  const frameDelay = (1000 / targetFrameRate) - 6;
+  const targetFrameRate = parseInt(options.frameRate) || 30;
 
   player.on('playing', () => {
     copyVideo = true;
@@ -1293,6 +1283,7 @@ export function main(player, canvas, options) {
   let frameCount = 0;
   let lastTime = new Date().getTime();
   let fps = 0;
+  let frameDelay = 0;
 
   // Draw the scene repeatedly
   function render(now) {
@@ -1601,6 +1592,13 @@ export function main(player, canvas, options) {
       fps = frameCount;
       frameCount = 0;
       elapsedTime -= 1000;
+
+      // frameDelay minimum of 1 avoids the frameDelay getting stuck at zero in the update expression below
+      if (frameDelay < 1) {
+        frameDelay = 1
+      }
+      // set frameDelay based on the current value and how close we are to targetFrameRate
+      frameDelay = frameDelay * fps / targetFrameRate;
 
       console.log("fps", fps);
     }
