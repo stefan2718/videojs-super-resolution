@@ -104,13 +104,6 @@ function get_reconstruct_biases(raw_weights) {
 }
 
 /**
- * Whut
- */
-const loaded_count = 0;
-// will set to true when video can be copied to texture
-let copyVideo = false;
-
-/**
  * Utility functions
  */
 const vsSource = `#version 300 es
@@ -1005,9 +998,12 @@ export function main(player, canvas, options) {
   const renderArea = [0, 0, 100, 100];
   const videoRes = [100, 100];
   const targetFrameRate = parseInt(options.frameRate) || 30;
+  // set to true when video can be copied to texture, ie. when the video is loaded and playing
+  let copyVideo = false;
 
   player.on('playing', () => {
     copyVideo = true;
+    requestAnimationFrame(render);
   });
 
   player.on(['pause', 'ended'], () => {
@@ -1287,9 +1283,10 @@ export function main(player, canvas, options) {
 
   // Draw the scene repeatedly
   function render(now) {
-    if (copyVideo) {
-      updateTexture(gl, input_texture, video);
+    if (!copyVideo) {
+      return;
     }
+    updateTexture(gl, input_texture, video);
     resizeCanvas(canvas);
 
     const renderSettings = scaleToFit(videoWidth, videoHeight, canvas.width, canvas.height);
@@ -1604,9 +1601,7 @@ export function main(player, canvas, options) {
     }
 
     // Do it again!
-    if (loaded_count < 1) {
-      requestAnimationFrame(() => setTimeout(render, frameDelay));
-    }
+    requestAnimationFrame(() => setTimeout(render, frameDelay));
   }
 
   requestAnimationFrame(render);
