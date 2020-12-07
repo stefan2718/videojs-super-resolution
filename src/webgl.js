@@ -580,10 +580,10 @@ function init_reconstruct_program(gl) {
   const float oneThird = 1.0 / 3.0;
   const float oneTwoFiftyFifth = 1.0 / 255.0;
   
-  out vec4 final_out;
+  out vec4 out0;
 
   void main() {
-    vec4 out0 = vec4(0.0, 0.0, 0.0, 1.0);
+    out0 = vec4(0.0, 0.0, 0.0, 1.0);
     float r_val = 0.0;
     float g_val = 0.0;
     float b_val = 0.0;
@@ -612,8 +612,6 @@ ${operations.join("\n")}
     out0.rgb = (vec3(r_val, g_val, b_val) + biases[3 * iOutY + iOutX].rgb) * oneTwoFiftyFifth;
     out0.rgb += texture(originalSampler, vec2(gl_FragCoord[0] / (videoRes.x * 3.0), gl_FragCoord[1] / (videoRes.y * 3.0))).rgb;
     out0.rgb = clamp(out0.rgb, 0.0, 1.0);
-
-    final_out = out0;
   }
   `;
 
