@@ -239,7 +239,7 @@ function init_conv1_1_program(gl) {
   const operations = [];
 
   for (let i = 0; i < 5; i++) {
-    coords.push(`vec2 coords_${i} = vec2(outX / inWidth, (outY + ${i}.0) / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2(outX * inWidthInverse, (outY + ${i}.0) * inHeightInverse);`);
     inputs.push(`vec4 in${i} = texture(padSampler, coords_${i});`);
 
     operations.push(`out0.r += dot(in${i}.rgb, weights[${i * layer_1_depth + 0}].rgb);`);
@@ -281,8 +281,8 @@ function init_conv1_1_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 8.0;
-    float inHeight = videoRes.y + 8.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 8.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 8.0);
 
     // Coords
 ${coords.join("\n")}
@@ -311,7 +311,7 @@ function init_conv1_2_program(gl) {
   const operations = [];
 
   for (let i = 0; i < layer_1_width; i++) {
-    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) / inWidth, outY / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) * inWidthInverse, outY * inHeightInverse);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -364,8 +364,8 @@ function init_conv1_2_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 8.0;
-    float inHeight = videoRes.y + 4.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 8.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 4.0);
 
     // Coords
 ${coords.join("\n")}
@@ -406,7 +406,7 @@ function init_conv2_1_program(gl) {
   const operations = [];
 
   for (let i = 0; i < layer_2_width; i++) {
-    coords.push(`vec2 coords_${i} = vec2(outX / inWidth, (outY + ${i}.0) / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2(outX * inWidthInverse, (outY + ${i}.0) * inHeightInverse);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -445,8 +445,8 @@ function init_conv2_1_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 4.0;
-    float inHeight = videoRes.y + 4.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 4.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 4.0);
 
     // Coords
 ${coords.join("\n")}
@@ -474,7 +474,7 @@ function init_conv2_2_program(gl) {
   const operations = [];
 
   for (let i = 0; i < 3; i++) {
-    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) / inWidth, outY / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) * inWidthInverse, outY * inHeightInverse);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -510,8 +510,8 @@ function init_conv2_2_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 4.0;
-    float inHeight = videoRes.y + 2.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 4.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 2.0);
 
     // Coords
 ${coords.join("\n")}
