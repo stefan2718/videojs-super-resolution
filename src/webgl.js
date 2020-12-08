@@ -1287,11 +1287,20 @@ export function main(player, canvas, options) {
     if (!copyVideo) {
       return;
     }
+
+    gl.finish();
+    console.time('updateTexture')
     updateTexture(gl, input_texture, video);
+    gl.finish();
+    console.timeEnd('updateTexture')
+    gl.finish();
+    console.time('resizeCanvas')
     resizeCanvas(canvas);
+    gl.finish();
+    console.timeEnd('resizeCanvas')
 
     const renderSettings = scaleToFit(videoWidth, videoHeight, canvas.width, canvas.height);
-    // console.log("renderSettings:", renderSettings);
+    console.log("renderSettings:", renderSettings);
 
     padProgramInfo.videoRes = [videoWidth, videoHeight];
     conv1_1_program_info.videoRes = [videoWidth, videoHeight];
@@ -1306,6 +1315,8 @@ export function main(player, canvas, options) {
     /**
      * PAD INPUT
      */
+    gl.finish();
+    console.time('PAD INPUT')
     gl.bindFramebuffer(gl.FRAMEBUFFER, pad_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pad_texture, 0);
     gl.drawBuffers([
@@ -1314,6 +1325,8 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth + 8, videoHeight + 8);
 
     drawScene(gl, padProgramInfo, buffers);
+    gl.finish();
+    console.timeEnd('PAD INPUT')
 
     /*
     console.log("PADDED");
@@ -1337,6 +1350,8 @@ export function main(player, canvas, options) {
 
     // Apply W_conv1_1
 
+    gl.finish();
+    console.time('W_conv1_1')
     gl.bindFramebuffer(gl.FRAMEBUFFER, w_conv1_1_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, conv1_1_texture1, 0);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, conv1_1_texture2, 0);
@@ -1348,6 +1363,8 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth + 8, videoHeight + 4);
 
     drawScene(gl, conv1_1_program_info, buffers);
+    gl.finish();
+    console.timeEnd('W_conv1_1')
 
     /*
     console.log("CONV1_1");
@@ -1394,6 +1411,8 @@ export function main(player, canvas, options) {
     // in: 648x290x8
     // out: 644x290x8
 
+    gl.finish();
+    console.time('W_conv1_2, relu and bias')
     gl.bindFramebuffer(gl.FRAMEBUFFER, w_conv1_2_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, conv1_2_texture1, 0);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, conv1_2_texture2, 0);
@@ -1408,6 +1427,8 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth + 4, videoHeight + 4);
 
     drawScene(gl, conv1_2_program_info, buffers);
+    gl.finish();
+    console.timeEnd('W_conv1_2, relu and bias')
 
     /*
     console.log("CONV1_2");
@@ -1454,6 +1475,8 @@ export function main(player, canvas, options) {
     // in: 644x290x8
     // out: 644x288x4
 
+    gl.finish();
+    console.time('W_conv2_1')
     gl.bindFramebuffer(gl.FRAMEBUFFER, w_conv2_1_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, conv2_1_texture1, 0);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, conv2_1_texture2, 0);
@@ -1465,6 +1488,8 @@ export function main(player, canvas, options) {
 
     drawScene(gl, conv2_1_program_info, buffers);
 
+    gl.finish();
+    console.timeEnd('W_conv2_1')
     /*
     console.log("CONV2_1");
     var w = videoWidth + 4;
@@ -1496,6 +1521,8 @@ export function main(player, canvas, options) {
     // in: 644x288x4
     // out: 642x288x4
 
+    gl.finish();
+    console.time('W_conv2_2, relu and bias')
     gl.bindFramebuffer(gl.FRAMEBUFFER, w_conv2_2_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, conv2_2_texture1, 0);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, conv2_2_texture2, 0);
@@ -1506,6 +1533,8 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth + 2, videoHeight + 2);
 
     drawScene(gl, conv2_2_program_info, buffers);
+    gl.finish();
+    console.timeEnd('W_conv2_2, relu and bias')
 
     /*
     console.log("CONV2_2");
@@ -1543,6 +1572,8 @@ export function main(player, canvas, options) {
     // Scale the current texture
     // Sum and clamp
 
+    gl.finish();
+    console.time('reconstruct')
     gl.bindFramebuffer(gl.FRAMEBUFFER, w_reconstruct_fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, reconstruct_texture, 0);
     gl.drawBuffers([
@@ -1551,6 +1582,8 @@ export function main(player, canvas, options) {
     gl.viewport(0, 0, videoWidth * 3, videoHeight * 3);
 
     drawScene(gl, reconstruct_program_info, buffers);
+    gl.finish();
+    console.timeEnd('reconstruct')
 
     /*
     console.log("Reconstruct");
@@ -1576,15 +1609,20 @@ export function main(player, canvas, options) {
     /**
      * Render Final Video
      */
+    gl.finish();
+    console.time('Render Final Video')
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
 
     drawScene(gl, render_program_info, buffers);
 
+    gl.finish();
+    console.timeEnd('Render Final Video')
     now = new Date().getTime();
     frameCount++;
     elapsedTime += now - lastTime;
 
+    console.log("now - lastTime", now - lastTime)
     lastTime = now;
     if (elapsedTime >= 1000) {
       fps = frameCount;
@@ -1601,8 +1639,14 @@ export function main(player, canvas, options) {
       console.log("fps", fps);
     }
 
+    frameDelay = 0;
     // Do it again!
+    gl.finish();
+    console.time('requestAnimationFrame')
     requestAnimationFrame(() => setTimeout(render, frameDelay));
+    gl.finish();
+    console.timeEnd('requestAnimationFrame')
+    console.log('.')
   }
 
   requestAnimationFrame(render);
