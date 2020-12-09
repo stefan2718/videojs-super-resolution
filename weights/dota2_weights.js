@@ -1,4 +1,4 @@
-var dota2_weights = {
+const dota2_weights = {
   "W_conv1_1": [
     [
       [

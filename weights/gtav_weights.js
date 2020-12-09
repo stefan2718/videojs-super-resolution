@@ -1,4 +1,4 @@
-var gtav_weights = {
+const gtav_weights = {
   "W_conv1_1": [
     [
       [

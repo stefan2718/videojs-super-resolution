@@ -1,4 +1,4 @@
-var dogs_playing_weights = {
+const dogs_playing_weights = {
   "W_conv1_1": [
     [
       [

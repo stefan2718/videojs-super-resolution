@@ -104,13 +104,6 @@ function get_reconstruct_biases(raw_weights) {
 }
 
 /**
- * Whut
- */
-const loaded_count = 0;
-// will set to true when video can be copied to texture
-let copyVideo = false;
-
-/**
  * Utility functions
  */
 const vsSource = `#version 300 es
@@ -246,7 +239,7 @@ function init_conv1_1_program(gl) {
   const operations = [];
 
   for (let i = 0; i < 5; i++) {
-    coords.push(`vec2 coords_${i} = vec2(outX / inWidth, (outY + ${i}.0) / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2(outX * inWidthInverse, (outY + ${i}.0) * inHeightInverse);`);
     inputs.push(`vec4 in${i} = texture(padSampler, coords_${i});`);
 
     operations.push(`out0.r += dot(in${i}.rgb, weights[${i * layer_1_depth + 0}].rgb);`);
@@ -288,8 +281,8 @@ function init_conv1_1_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 8.0;
-    float inHeight = videoRes.y + 8.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 8.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 8.0);
 
     // Coords
 ${coords.join("\n")}
@@ -318,7 +311,7 @@ function init_conv1_2_program(gl) {
   const operations = [];
 
   for (let i = 0; i < layer_1_width; i++) {
-    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) / inWidth, outY / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) * inWidthInverse, outY * inHeightInverse);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -371,8 +364,8 @@ function init_conv1_2_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 8.0;
-    float inHeight = videoRes.y + 4.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 8.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 4.0);
 
     // Coords
 ${coords.join("\n")}
@@ -413,7 +406,7 @@ function init_conv2_1_program(gl) {
   const operations = [];
 
   for (let i = 0; i < layer_2_width; i++) {
-    coords.push(`vec2 coords_${i} = vec2(outX / inWidth, (outY + ${i}.0) / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2(outX * inWidthInverse, (outY + ${i}.0) * inHeightInverse);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -452,8 +445,8 @@ function init_conv2_1_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 4.0;
-    float inHeight = videoRes.y + 4.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 4.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 4.0);
 
     // Coords
 ${coords.join("\n")}
@@ -481,7 +474,7 @@ function init_conv2_2_program(gl) {
   const operations = [];
 
   for (let i = 0; i < 3; i++) {
-    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) / inWidth, outY / inHeight);`);
+    coords.push(`vec2 coords_${i} = vec2((outX + ${i}.0) * inWidthInverse, outY * inHeightInverse);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -517,8 +510,8 @@ function init_conv2_2_program(gl) {
     float outX = float(gl_FragCoord[0]);
     float outY = float(gl_FragCoord[1]);
 
-    float inWidth = videoRes.x + 4.0;
-    float inHeight = videoRes.y + 2.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 4.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 2.0);
 
     // Coords
 ${coords.join("\n")}
@@ -552,7 +545,7 @@ function init_reconstruct_program(gl) {
   for (let j = 0; j < 3; j++) {
     for (let i = 0; i < 3; i++) {
       // Todo
-      coords.push(`vec2 coords_${j}_${i} = vec2((inX + ${i}.0) / inWidth, (inY + ${j}.0) / inHeight);`);
+      coords.push(`vec2 coords_${j}_${i} = vec2((inX + ${i}.0) * inWidthInverse, (inY + ${j}.0) * inHeightInverse);`);
 
       inputs.push(`vec4 in_${j}_${i}_0 = texture(layer1Sampler, coords_${j}_${i});`);
       inputs.push(`vec4 in_${j}_${i}_1 = texture(layer2Sampler, coords_${j}_${i});`);
@@ -584,10 +577,13 @@ function init_reconstruct_program(gl) {
   uniform vec4 weights[${3 * 3 * 3 * 9 * 2}];
   uniform vec3 biases[9];
 
-  out vec4 final_out;
+  const float oneThird = 1.0 / 3.0;
+  const float oneTwoFiftyFifth = 1.0 / 255.0;
+  
+  out vec4 out0;
 
   void main() {
-    vec4 out0 = vec4(0.0, 0.0, 0.0, 1.0);
+    out0 = vec4(0.0, 0.0, 0.0, 1.0);
     float r_val = 0.0;
     float g_val = 0.0;
     float b_val = 0.0;
@@ -595,11 +591,11 @@ function init_reconstruct_program(gl) {
     int iOutX = int(mod(gl_FragCoord[0] - 0.5, 3.0));
     int iOutY = int(mod(gl_FragCoord[1] - 0.5, 3.0));
 
-    float inX = (gl_FragCoord[0] - float(iOutX) - 0.5) / 3.0 + 0.5;
-    float inY = (gl_FragCoord[1] - float(iOutY) - 0.5) / 3.0 + 0.5;
+    float inX = (gl_FragCoord[0] - float(iOutX) - 0.5) * oneThird + 0.5;
+    float inY = (gl_FragCoord[1] - float(iOutY) - 0.5) * oneThird + 0.5;
 
-    float inWidth = videoRes.x + 2.0;
-    float inHeight = videoRes.y + 2.0;
+    float inWidthInverse = 1.0 / (videoRes.x + 2.0);
+    float inHeightInverse = 1.0 / (videoRes.y + 2.0);
 
     // Coords
 ${coords.join("\n")}
@@ -613,11 +609,9 @@ ${weights.join("\n")}
     // Operations
 ${operations.join("\n")}
 
-    out0.rgb = (vec3(r_val, g_val, b_val) + biases[3 * iOutY + iOutX].rgb) / 255.0;
+    out0.rgb = (vec3(r_val, g_val, b_val) + biases[3 * iOutY + iOutX].rgb) * oneTwoFiftyFifth;
     out0.rgb += texture(originalSampler, vec2(gl_FragCoord[0] / (videoRes.x * 3.0), gl_FragCoord[1] / (videoRes.y * 3.0))).rgb;
     out0.rgb = clamp(out0.rgb, 0.0, 1.0);
-
-    final_out = out0;
   }
   `;
 
@@ -1004,9 +998,13 @@ export function main(player, canvas, options) {
   let videoWidth = video.videoWidth || 640;
   const renderArea = [0, 0, 100, 100];
   const videoRes = [100, 100];
+  const targetFrameRate = parseInt(options.frameRate) || 30;
+  // set to true when video can be copied to texture, ie. when the video is loaded and playing
+  let copyVideo = false;
 
   player.on('playing', () => {
     copyVideo = true;
+    requestAnimationFrame(render);
   });
 
   player.on(['pause', 'ended'], () => {
@@ -1282,12 +1280,14 @@ export function main(player, canvas, options) {
   let frameCount = 0;
   let lastTime = new Date().getTime();
   let fps = 0;
+  let frameDelay = 0;
 
   // Draw the scene repeatedly
   function render(now) {
-    if (copyVideo) {
-      updateTexture(gl, input_texture, video);
+    if (!copyVideo) {
+      return;
     }
+    updateTexture(gl, input_texture, video);
     resizeCanvas(canvas);
 
     const renderSettings = scaleToFit(videoWidth, videoHeight, canvas.width, canvas.height);
@@ -1591,13 +1591,18 @@ export function main(player, canvas, options) {
       frameCount = 0;
       elapsedTime -= 1000;
 
+      // frameDelay minimum of 1 avoids the frameDelay getting stuck at zero in the update expression below
+      if (frameDelay < 1) {
+        frameDelay = 1
+      }
+      // set frameDelay based on the current value and how close we are to targetFrameRate
+      frameDelay = frameDelay * fps / targetFrameRate;
+
       console.log("fps", fps);
     }
 
     // Do it again!
-    if (loaded_count < 1) {
-      requestAnimationFrame(render);
-    }
+    requestAnimationFrame(() => setTimeout(render, frameDelay));
   }
 
   requestAnimationFrame(render);

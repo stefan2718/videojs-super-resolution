@@ -1,4 +1,4 @@
-var witcher3_weights = {
+const witcher3_weights = {
   "W_conv1_1": [
     [
       [

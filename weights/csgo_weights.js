@@ -1,4 +1,4 @@
-var csgo_weights = {
+const csgo_weights = {
   "W_conv1_1": [
     [
       [
