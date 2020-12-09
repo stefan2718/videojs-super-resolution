@@ -1284,9 +1284,8 @@ export function main(player, canvas, options) {
 
   // Draw the scene repeatedly
   function render(now) {
-    if (!copyVideo) {
-      return;
-    }
+    if (!copyVideo) return;
+
     updateTexture(gl, input_texture, video);
     resizeCanvas(canvas);
 
