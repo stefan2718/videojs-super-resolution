@@ -239,7 +239,7 @@ function init_conv1_1_program(gl) {
   const operations = [];
 
   for (let i = 0; i < 5; i++) {
-    coords.push(`vec2 coords_${i} = vec2(outX * inWidthInverse, (outY + ${i}.0) * inHeightInverse);`);
+    coords.push(`vec2 coords_${i} = vec2(outX * videoResInverse.x, (outY + ${i}.0) * videoResInverse.y);`);
     inputs.push(`vec4 in${i} = texture(padSampler, coords_${i});`);
 
     operations.push(`out0.r += dot(in${i}.rgb, weights[${i * layer_1_depth + 0}].rgb);`);
@@ -281,8 +281,7 @@ function init_conv1_1_program(gl) {
     float outX = float(gl_FragCoord.x);
     float outY = float(gl_FragCoord.y);
 
-    float inWidthInverse = 1.0 / (videoRes.x + 8.0);
-    float inHeightInverse = 1.0 / (videoRes.y + 8.0);
+    vec2 videoResInverse = 1.0 / (videoRes + 8.0);
 
     // Coords
 ${coords.join("\n")}
@@ -406,7 +405,7 @@ function init_conv2_1_program(gl) {
   const operations = [];
 
   for (let i = 0; i < layer_2_width; i++) {
-    coords.push(`vec2 coords_${i} = vec2(outX * inWidthInverse, (outY + ${i}.0) * inHeightInverse);`);
+    coords.push(`vec2 coords_${i} = vec2(outX * videoResInverse.x, (outY + ${i}.0) * videoResInverse.y);`);
 
     inputs.push(`vec4 in${i}_0 = texture(layer1Sampler, coords_${i});`);
     inputs.push(`vec4 in${i}_1 = texture(layer2Sampler, coords_${i});`);
@@ -445,8 +444,7 @@ function init_conv2_1_program(gl) {
     float outX = float(gl_FragCoord.x);
     float outY = float(gl_FragCoord.y);
 
-    float inWidthInverse = 1.0 / (videoRes.x + 4.0);
-    float inHeightInverse = 1.0 / (videoRes.y + 4.0);
+    vec2 videoResInverse = 1.0 / (videoRes + 4.0);
 
     // Coords
 ${coords.join("\n")}
@@ -545,7 +543,7 @@ function init_reconstruct_program(gl) {
   for (let j = 0; j < 3; j++) {
     for (let i = 0; i < 3; i++) {
       // Todo
-      coords.push(`vec2 coords_${j}_${i} = vec2((inX + ${i}.0) * inWidthInverse, (inY + ${j}.0) * inHeightInverse);`);
+      coords.push(`vec2 coords_${j}_${i} = vec2((inX + ${i}.0) * videoResInverse.x, (inY + ${j}.0) * videoResInverse.y);`);
 
       inputs.push(`vec4 in_${j}_${i}_0 = texture(layer1Sampler, coords_${j}_${i});`);
       inputs.push(`vec4 in_${j}_${i}_1 = texture(layer2Sampler, coords_${j}_${i});`);
@@ -594,8 +592,7 @@ function init_reconstruct_program(gl) {
     float inX = (gl_FragCoord.x - float(iOutX) - 0.5) * oneThird + 0.5;
     float inY = (gl_FragCoord.y - float(iOutY) - 0.5) * oneThird + 0.5;
 
-    float inWidthInverse = 1.0 / (videoRes.x + 2.0);
-    float inHeightInverse = 1.0 / (videoRes.y + 2.0);
+    vec2 videoResInverse = 1.0 / (videoRes + 2.0);
 
     // Coords
 ${coords.join("\n")}
