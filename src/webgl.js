@@ -174,7 +174,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
 
 function initCopyProgram(gl) {
   const copyFragShader = `#version 300 es
-  precision highp float;
+  precision mediump float;
   uniform sampler2D originalSampler;
 
   uniform vec2 videoRes;
@@ -183,13 +183,15 @@ function initCopyProgram(gl) {
   layout(location = 0) out vec4 copyOut;
 
   void main() {
-    if (gl_FragCoord[0] < renderArea.x) {
-      copyOut = vec4(0.0, 0.0, 0.0, 1.0);
-    } else if (gl_FragCoord[0] > renderArea.z) {
-      copyOut = vec4(0.0, 0.0, 0.0, 1.0);
-    } else if ((gl_FragCoord[1] < renderArea.y) || (gl_FragCoord[1] > renderArea.w)) {
-      copyOut = vec4(0.0, 0.0, 0.0, 1.0);
-    } else {
+    // default return black
+    copyOut = vec4(0.0, 0.0, 0.0, 1.0);
+
+    // if we are not in the padding around the video, get the texture value
+    if (gl_FragCoord.x > renderArea.x
+      && gl_FragCoord[0] < renderArea.z
+      && gl_FragCoord[1] > renderArea.y
+      && gl_FragCoord[1] < renderArea.w
+    ) {
       copyOut = texture(originalSampler, vec2((gl_FragCoord[0] - renderArea.x) / videoRes.x, 1.0 - ((gl_FragCoord[1] - renderArea.y) / videoRes.y)));
     }
   }
@@ -204,7 +206,7 @@ function initCopyProgram(gl) {
 function initPadProgram(gl, padding) {
   const padFragShader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D originalSampler;
   uniform vec2 videoRes;
@@ -267,7 +269,7 @@ function init_conv1_1_program(gl) {
 
   const conv1_1_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D padSampler;
   uniform vec3 weights[${layer_1_width * layer_1_depth}];
@@ -343,8 +345,8 @@ function init_conv1_2_program(gl) {
 
   const conv1_2_shader = `#version 300 es
 
-  precision highp float;
-  precision highp sampler2D;
+  precision mediump float;
+  precision mediump sampler2D;
 
   uniform sampler2D layer1Sampler;
   uniform sampler2D layer2Sampler;
@@ -430,7 +432,7 @@ function init_conv2_1_program(gl) {
 
   const conv2_1_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D layer1Sampler;
   uniform sampler2D layer2Sampler;
@@ -496,7 +498,7 @@ function init_conv2_2_program(gl) {
 
   const conv2_2_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D layer1Sampler;
   uniform sampler2D layer2Sampler;
@@ -570,7 +572,7 @@ function init_reconstruct_program(gl) {
 
   const reconstruct_shader = `#version 300 es
 
-  precision highp float;
+  precision mediump float;
 
   uniform sampler2D originalSampler;
   uniform sampler2D layer1Sampler;
@@ -789,45 +791,40 @@ function updateTexture(gl, texture, video) {
   );
 }
 
+// Setup the unchanging variables for drawScene
+
+// Create a perspective matrix, a special matrix that is
+// used to simulate the distortion of perspective in a camera.
+// Our field of view is 45 degrees, with a width/height
+// ratio that matches the display size of the canvas
+// and we only want to see objects between 0.1 units
+// and 100 units away from the camera.
+const zNear = 0.1;
+const zFar = 100.0;
+const projectionMatrix = mat4.create();
+mat4.ortho(projectionMatrix, -1.0, 1.0, 1.0, -1.0, zNear, zFar);
+
+// Set the drawing position to the "identity" point, which is
+// the center of the scene.
+const modelViewMatrix = mat4.create();
+
+// Now move the drawing position a bit to where we want to
+// start drawing the square.
+mat4.translate(
+  modelViewMatrix, // destination matrix
+  modelViewMatrix, // matrix to translate
+  [-0.0, 0.0, -6.0]
+); // amount to translate
+
+const normalMatrix = mat4.create();
+mat4.invert(normalMatrix, modelViewMatrix);
+mat4.transpose(normalMatrix, normalMatrix);
+
+
 // Draw the scene.
 function drawScene(gl, programInfo, buffers, texture) {
-  gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
-  gl.clearDepth(1.0); // Clear everything
-  gl.enable(gl.DEPTH_TEST); // Enable depth testing
-  gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Create a perspective matrix, a special matrix that is
-  // used to simulate the distortion of perspective in a camera.
-  // Our field of view is 45 degrees, with a width/height
-  // ratio that matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
-
-  const zNear = 0.1;
-  const zFar = 100.0;
-  const projectionMatrix = mat4.create();
-
-  mat4.ortho(projectionMatrix, -1.0, 1.0, 1.0, -1.0, zNear, zFar);
-
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  const modelViewMatrix = mat4.create();
-
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
-
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -6.0]
-  ); // amount to translate
-
-  const normalMatrix = mat4.create();
-  mat4.invert(normalMatrix, modelViewMatrix);
-  mat4.transpose(normalMatrix, normalMatrix);
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
@@ -1024,16 +1021,17 @@ export function main(player, canvas, options) {
     return;
   }
 
-  const ext =
-    gl.getExtension('OES_texture_float') ||
-    gl.getExtension('MOZ_OES_texture_float') ||
-    gl.getExtension('WEBKIT_OES_texture_float');
-  gl.getExtension('OES_texture_half_float') ||
-  gl.getExtension('MOZ_OES_texture_half_float') ||
-  gl.getExtension('WEBKIT_OES_texture_half_float');
+  // enable WebGL extensions
   gl.getExtension('EXT_color_buffer_float');
   gl.getExtension('OES_texture_float_linear');
   gl.getExtension('OES_texture_half_float_linear');
+
+  // set default clearing values
+  gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
+  gl.clearDepth(1.0); // Clear everything
+  gl.enable(gl.DEPTH_TEST); // Enable depth testing
+  gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
 
   // Initialize the textures
 
