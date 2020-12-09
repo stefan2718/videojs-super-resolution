@@ -181,11 +181,11 @@ function initCopyProgram(gl) {
 
     // if we are not in the padding around the video, get the texture value
     if (gl_FragCoord.x > renderArea.x
-      && gl_FragCoord[0] < renderArea.z
-      && gl_FragCoord[1] > renderArea.y
-      && gl_FragCoord[1] < renderArea.w
+      && gl_FragCoord.x < renderArea.z
+      && gl_FragCoord.y > renderArea.y
+      && gl_FragCoord.y < renderArea.w
     ) {
-      copyOut = texture(originalSampler, vec2((gl_FragCoord[0] - renderArea.x) / videoRes.x, 1.0 - ((gl_FragCoord[1] - renderArea.y) / videoRes.y)));
+      copyOut = texture(originalSampler, vec2((gl_FragCoord.x - renderArea.x) / videoRes.x, 1.0 - ((gl_FragCoord.y - renderArea.y) / videoRes.y)));
     }
   }
   `;
@@ -209,13 +209,13 @@ function initPadProgram(gl, padding) {
 
   void main() {
     ivec2 end = ivec2(videoRes.x + ${padding}.0, videoRes.y + ${padding}.0);
-    ivec2 outC = ivec2(gl_FragCoord[0], gl_FragCoord[1]);
+    ivec2 outC = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 
     if (any(lessThan(outC, start)) || any(greaterThanEqual(outC, end))) {
       padOut = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
-      float x = gl_FragCoord[0] - 4.0;
-      float y = gl_FragCoord[1] - 4.0;
+      float x = gl_FragCoord.x - 4.0;
+      float y = gl_FragCoord.y - 4.0;
       vec2 coords = vec2(x / videoRes.x, y / videoRes.y);
       padOut = texture(originalSampler, coords) * 255.0;
       // padOut = vec4(x, y, coords.r, coords.g);
@@ -278,8 +278,8 @@ function init_conv1_1_program(gl) {
     out1 = vec4(0.0, 0.0, 0.0, 0.0);
     out2 = vec4(0.0, 0.0, 0.0, 0.0);
     out3 = vec4(0.0, 0.0, 0.0, 0.0);
-    float outX = float(gl_FragCoord[0]);
-    float outY = float(gl_FragCoord[1]);
+    float outX = float(gl_FragCoord.x);
+    float outY = float(gl_FragCoord.y);
 
     float inWidthInverse = 1.0 / (videoRes.x + 8.0);
     float inHeightInverse = 1.0 / (videoRes.y + 8.0);
@@ -361,8 +361,8 @@ function init_conv1_2_program(gl) {
     out2 = vec4(0.0, 0.0, 0.0, 0.0);
     out3 = vec4(0.0, 0.0, 0.0, 0.0);
 
-    float outX = float(gl_FragCoord[0]);
-    float outY = float(gl_FragCoord[1]);
+    float outX = float(gl_FragCoord.x);
+    float outY = float(gl_FragCoord.y);
 
     float inWidthInverse = 1.0 / (videoRes.x + 8.0);
     float inHeightInverse = 1.0 / (videoRes.y + 4.0);
@@ -442,8 +442,8 @@ function init_conv2_1_program(gl) {
     out0 = vec4(0.0, 0.0, 0.0, 0.0);
     out1 = vec4(0.0, 0.0, 0.0, 0.0);
     
-    float outX = float(gl_FragCoord[0]);
-    float outY = float(gl_FragCoord[1]);
+    float outX = float(gl_FragCoord.x);
+    float outY = float(gl_FragCoord.y);
 
     float inWidthInverse = 1.0 / (videoRes.x + 4.0);
     float inHeightInverse = 1.0 / (videoRes.y + 4.0);
@@ -507,8 +507,8 @@ function init_conv2_2_program(gl) {
     out0 = vec4(0.0, 0.0, 0.0, 0.0);
     out1 = vec4(0.0, 0.0, 0.0, 0.0);
 
-    float outX = float(gl_FragCoord[0]);
-    float outY = float(gl_FragCoord[1]);
+    float outX = float(gl_FragCoord.x);
+    float outY = float(gl_FragCoord.y);
 
     float inWidthInverse = 1.0 / (videoRes.x + 4.0);
     float inHeightInverse = 1.0 / (videoRes.y + 2.0);
@@ -588,11 +588,11 @@ function init_reconstruct_program(gl) {
     float g_val = 0.0;
     float b_val = 0.0;
 
-    int iOutX = int(mod(gl_FragCoord[0] - 0.5, 3.0));
-    int iOutY = int(mod(gl_FragCoord[1] - 0.5, 3.0));
+    int iOutX = int(mod(gl_FragCoord.x - 0.5, 3.0));
+    int iOutY = int(mod(gl_FragCoord.y - 0.5, 3.0));
 
-    float inX = (gl_FragCoord[0] - float(iOutX) - 0.5) * oneThird + 0.5;
-    float inY = (gl_FragCoord[1] - float(iOutY) - 0.5) * oneThird + 0.5;
+    float inX = (gl_FragCoord.x - float(iOutX) - 0.5) * oneThird + 0.5;
+    float inY = (gl_FragCoord.y - float(iOutY) - 0.5) * oneThird + 0.5;
 
     float inWidthInverse = 1.0 / (videoRes.x + 2.0);
     float inHeightInverse = 1.0 / (videoRes.y + 2.0);
@@ -610,7 +610,7 @@ ${weights.join("\n")}
 ${operations.join("\n")}
 
     out0.rgb = (vec3(r_val, g_val, b_val) + biases[3 * iOutY + iOutX].rgb) * oneTwoFiftyFifth;
-    out0.rgb += texture(originalSampler, vec2(gl_FragCoord[0] / (videoRes.x * 3.0), gl_FragCoord[1] / (videoRes.y * 3.0))).rgb;
+    out0.rgb += texture(originalSampler, vec2(gl_FragCoord.x / (videoRes.x * 3.0), gl_FragCoord.y / (videoRes.y * 3.0))).rgb;
     out0.rgb = clamp(out0.rgb, 0.0, 1.0);
   }
   `;
